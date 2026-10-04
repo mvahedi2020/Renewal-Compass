@@ -22,7 +22,7 @@ export const options = [
     scope: "Documented preparation workaround (2 days).",
     excluded: "No export automation or custom dashboard.",
     impact:
-      "Preserves the shared milestone and leaves 6 days available; manual work continues.",
+      "At the 14-day baseline, preserves the shared milestone and leaves 6 days available; manual work continues.",
     dependency: "Operations owner accepts recurring preparation burden.",
     evidence: ["O1", "A1"],
   },
@@ -33,9 +33,9 @@ export const options = [
     reach: 1,
     scope: "Dedicated dashboard (14 days).",
     excluded:
-      "No reusable export or shared accessibility improvement in this cycle.",
+      "No reusable export; shared accessibility work is outside this package.",
     impact:
-      "Exceeds the 8-day package budget by 6 days; at full capacity displaces the 6-day shared milestone for 12 accounts.",
+      "At the 14-day baseline, exceeds the 8-day package budget by 6; assigning the full baseline cycle displaces the 6-day milestone for 12 accounts.",
     dependency:
       "Separate discovery, security review and additional approved capacity would be required.",
     evidence: ["O1", "A2"],

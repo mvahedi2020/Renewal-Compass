@@ -11,3 +11,11 @@ No human research has been conducted. Invite account leads and product managers 
 ## Release evidence ledger
 
 Local implementation and verification are recorded separately from publication. Publication is pending: repository creation, Pages setup before first push, final GitHub Actions success, public/local HEAD agreement, deployed artifact/live parity, link checks and public reviewer route confirmation belong to centralized release review. S076 external gates remain open until those checks are observed. Any personal product discussion is also separate from software checks; no participant result is invented.
+
+## Observed local checks — October 3, 2026
+
+Node 24.14.1 locked installation passed. Lint, strict TypeScript, runtime/tracked-file checks and production build passed. Domain/storage suite: 18 passed. Production Playwright suite: 24 passed after repairing the observed reverse-Tab modal wrap; export assertion was corrected to match the exact exclusion text. Audit: zero vulnerabilities. Production browser checks observed no page errors, console errors or external application requests.
+
+Agent-browser production load/snapshot and screenshot inspection passed. Account brief, revealed desktop comparison, forms and modal layouts at 320, 390 and 1280×633 were inspected. Native modal focus is supplemented by explicit first/last button wrapping; Escape restores the initiating control. All seven product documents are included in the build and their local routes returned success.
+
+The four workflow Action commit pins were resolved through GitHub's commit API: checkout `11bd71901bbe5b1630ceea73d27597364c9af683`, setup-node `49933ea5288caeca8642d1e84afbd3f7d6820020`, upload-pages-artifact `56afc609e74202658d3ffba0e8f6dda462b719fa`, deploy-pages `d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e`. This verifies that the pinned commits exist; it is not deployment success.
