@@ -22,3 +22,7 @@ describe('raw content and readability guard',()=>{
  it('reset rejects new readability during review',()=>{let readable=false;const store={getItem:()=>{if(!readable)throw Error();return 'unseen'},setItem:()=>{throw Error('must not write')}};const l=load(store);readable=true;expect(()=>reset(store,l.token)).toThrow()})
  it('write failure keeps usable in-memory decision',()=>{const store={getItem:()=>null,setItem:()=>{throw Error()}};expect(save(store,load(store).token,record(fresh(),snapshot(fresh()))).saved).toBe(false)})
 })
+describe('ordered history boundary',()=>{
+ it('rejects withdrawal event reordering and revision tampering',()=>{const s=record(fresh(),snapshot(fresh()));const w=withdraw(s,1);const x=JSON.parse(JSON.stringify(w));x.history[1].revision=1;expect(parse(JSON.stringify(x))).toBeNull();x.history[1].revision=2;x.history.reverse();expect(parse(JSON.stringify(x))).toBeNull()})
+ it('a revised snapshot after withdrawal preserves the withdrawn record',()=>{let s=withdraw(record(fresh(),snapshot(fresh())),1);s=revise(s,{...s.draft,option:'bridge'});s=record(s,snapshot(s));expect(parse(JSON.stringify(s))).not.toBeNull();expect(s.history).toHaveLength(3)})
+})
