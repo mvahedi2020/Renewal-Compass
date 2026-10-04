@@ -10,7 +10,9 @@ No human research has been conducted. Invite account leads and product managers 
 
 ## Release evidence ledger
 
-Local implementation and verification are recorded separately from publication. Publication is pending: repository creation, Pages setup before first push, final GitHub Actions success, public/local HEAD agreement, deployed artifact/live parity, link checks and public reviewer route confirmation belong to centralized release review. S076 external gates remain open until those checks are observed. Any personal product discussion is also separate from software checks; no participant result is invented.
+The first public release was independently verified on October 3, 2026: source commit `704a7b85f15ac7856ffa1f1a2a828f81469f61eb`, successful [verification and Pages release](https://github.com/mvahedi2020/Renewal-Compass/actions/runs/37181568059), clean local/public main agreement, and all 11 deployed files matching the local build and GitHub release artifact byte for byte. Pages was enabled before the first push. All 26 browser journeys also passed against the public URL, including failure, recovery, timing warnings and storage boundaries. A separate reviewer replay confirmed the blocked custom option, bridge recovery, exact conditional review and withdrawal with no browser errors.
+
+Later documentation revisions retain the same application behavior and are verified by their own publication workflow. These are software/release observations. Personal product discussion and human comprehension are separate; no participant result is invented.
 
 ## Observed local checks — October 3, 2026
 
