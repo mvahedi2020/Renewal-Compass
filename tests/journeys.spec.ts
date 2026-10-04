@@ -1,32 +1,423 @@
-import {test,expect,type Page} from '@playwright/test'
-import {fresh,snapshot,record} from '../src/domain'
-import {key} from '../src/storage'
-async function decision(page:Page){await page.getByRole('button',{name:'03 · Decision record'}).click()}
-async function preview(page:Page){await decision(page);await page.getByRole('button',{name:'Preview conditional decision'}).click()}
-async function confirm(page:Page){await preview(page);await page.getByRole('button',{name:'Confirm reviewed decision'}).click()}
-async function compare(page:Page){await page.getByRole('button',{name:'02 · Compare packages'}).click()}
-const faults:string[]=[]
-test.beforeEach(async({page})=>{faults.length=0;page.on('pageerror',e=>faults.push(e.message));page.on('console',m=>{if(m.type()==='error')faults.push(m.text())});page.on('request',r=>{if(!r.url().startsWith('http://127.0.0.1:4193/')&&!r.url().startsWith('blob:'))faults.push(`external ${r.url()}`)});await page.goto('./')})
-test.afterEach(()=>expect(faults).toEqual([]))
-test('account keeps obligations requests observations and assumptions distinct',async({page})=>{await expect(page.getByText('Existing obligation',{exact:true})).toBeVisible();await expect(page.getByText('Requested features',{exact:true})).toBeVisible();await expect(page.getByText('O1 · Observation')).toBeVisible();await expect(page.getByText('A2 · Assumption')).toBeVisible();await expect(page.getByText('Renewal result: not observed',{exact:false})).toBeVisible()})
-test('primary reviewed decision is conditional and survives compatible refresh',async({page})=>{await compare(page);await expect(page.getByText('Blocked: 6 days beyond package budget')).toBeVisible();await confirm(page);await expect(page.getByText('Review 1 · Active consideration')).toBeVisible();await page.reload();await decision(page);await expect(page.getByText('Review 1 · Active consideration')).toBeVisible();await expect(page.getByRole('status')).toContainText('Edits stay in this tab')})
-test('cancel preview makes no saved change',async({page})=>{await preview(page);await page.getByRole('button',{name:'Cancel review'}).click();expect(await page.evaluate(k=>localStorage.getItem(k),key)).toBeNull();await expect(page.getByText('No reviewed decision yet.',{exact:false})).toBeVisible()})
-test('custom package is blocked and bridge recovers fit',async({page})=>{await compare(page);await page.getByRole('button',{name:'Consider custom dashboard'}).click();await page.getByRole('button',{name:'Prepare conditional brief'}).click();await expect(page.getByRole('button',{name:'Preview conditional decision'})).toBeDisabled();await page.getByRole('button',{name:'Change package or capacity'}).click();await page.getByRole('button',{name:'Consider bridge only'}).click();await confirm(page);await expect(page.getByText('Review 3 · Active consideration')).toBeVisible()})
-test('10-day scenario rejects shared and supports a 2-day bridge',async({page})=>{await compare(page);await page.getByLabel('Available team days (invented)').selectOption('10');await expect(page.getByText('Blocked: 4 days beyond package budget')).toBeVisible();await page.getByRole('button',{name:'Consider bridge only'}).click();await preview(page);await expect(page.getByRole('dialog')).toContainText('2 of 4 package days; 2 days remain')})
-test('conditions and unknowns must be entered before review',async({page})=>{await decision(page);await page.getByLabel('Conditions before any commitment').fill('');await expect(page.getByRole('button',{name:'Preview conditional decision'})).toBeDisabled();await page.getByLabel('Conditions before any commitment').fill('Require owner approval before any promise.');await page.getByLabel('Unresolved risks / decision rationale').fill('');await expect(page.getByRole('button',{name:'Preview conditional decision'})).toBeDisabled()})
-test('reviewed snapshot remains exact when later package is revised',async({page})=>{await confirm(page);await compare(page);await page.getByRole('button',{name:'Consider bridge only'}).click();await confirm(page);const history=page.locator('.record-history');await expect(history.getByRole('heading',{name:'Shared export + operating bridge',exact:true})).toBeVisible();await expect(history.getByRole('heading',{name:'Operating bridge only',exact:true})).toBeVisible();const raw=await page.evaluate(k=>localStorage.getItem(k),key);const s=JSON.parse(raw!);expect(s.history[0].snapshot.option.id).toBe('shared');expect(s.history[1].snapshot.option.id).toBe('bridge')})
-test('withdrawal requires review and cancellation preserves activity',async({page})=>{await confirm(page);await page.getByRole('button',{name:'Review withdrawal'}).click();await page.getByRole('button',{name:'Cancel review'}).click();await expect(page.getByText('Review 1 · Active consideration')).toBeVisible();await page.getByRole('button',{name:'Review withdrawal'}).click();await page.getByRole('button',{name:'Confirm withdrawal'}).click();await expect(page.getByText('Review 1 · Withdrawn')).toBeVisible();await expect(page.getByRole('button',{name:'Export reviewed brief'})).toBeVisible()})
-test('restore an earlier scope to draft then review a new snapshot',async({page})=>{await confirm(page);await page.getByRole('button',{name:'Review withdrawal'}).click();await page.getByRole('button',{name:'Confirm withdrawal'}).click();await page.getByRole('button',{name:'Revise from this record'}).click();await preview(page);await page.getByRole('button',{name:'Confirm reviewed decision'}).click();await expect(page.getByText('Review 1 · Withdrawn')).toBeVisible();await expect(page.getByText('Review 4 · Active consideration')).toBeVisible()})
-test('export is self-contained exact reviewed scope',async({page})=>{await confirm(page);const download=page.waitForEvent('download');await page.getByRole('button',{name:'Export reviewed brief'}).click();const file=await download;expect(file.suggestedFilename()).toBe('renewal-compass-review-1.json');const path=await file.path();const {readFile}=await import('node:fs/promises');const content=JSON.parse(await readFile(path!,'utf8'));expect(content.kind).toBe('conditional-review');expect(content.scope).toContain('Reusable review export');expect(content.evidence.map((e:{id:string})=>e.id)).toEqual(['O1','O2','A1']);expect(content.exclusions).toContain('no delivery date')})
-test('invalid saved bytes preserved through cancellation and explicit reset',async({page})=>{await page.evaluate(k=>localStorage.setItem(k,'{broken'),key);await page.reload();await expect(page.getByRole('status')).toContainText('preserved');await decision(page);await expect(page.getByRole('button',{name:'Preview conditional decision'})).toBeDisabled();await page.getByRole('button',{name:'Review sample reset'}).click();await page.getByRole('button',{name:'Cancel review'}).click();expect(await page.evaluate(k=>localStorage.getItem(k),key)).toBe('{broken');await page.getByRole('button',{name:'Review sample reset'}).click();await page.getByRole('button',{name:'Confirm sample reset'}).click();expect(JSON.parse((await page.evaluate(k=>localStorage.getItem(k),key))!).history).toEqual([])})
-test('same-revision changed saved data invalidates decision confirmation',async({page})=>{const s=fresh();await page.evaluate(([k,v])=>localStorage.setItem(k,v),[key,JSON.stringify(s)]);await page.reload();await preview(page);await page.evaluate(([k,v])=>localStorage.setItem(k,v),[key,JSON.stringify({...s,draft:{...s.draft,owner:'Other owner'}})]);await page.getByRole('button',{name:'Confirm reviewed decision'}).click();await expect(page.getByRole('status')).toContainText('changed during review');expect(JSON.parse((await page.evaluate(k=>localStorage.getItem(k),key))!).draft.owner).toBe('Other owner');await page.getByRole('button',{name:'Reload saved sample'}).click();await expect(page.getByLabel('Decision owner')).toHaveValue('Other owner')})
-test('changed raw bytes invalidate reviewed reset',async({page})=>{await page.evaluate(k=>localStorage.setItem(k,'broken'),key);await page.reload();await page.getByRole('button',{name:'Review sample reset'}).click();await page.evaluate(k=>localStorage.setItem(k,'new unseen bytes'),key);await page.getByRole('button',{name:'Confirm sample reset'}).click();await expect(page.getByRole('status')).toContainText('changed during reset review');expect(await page.evaluate(k=>localStorage.getItem(k),key)).toBe('new unseen bytes')})
-test('blocked reads with working writes never overwrite unseen content',async({page})=>{await page.addInitScript(k=>{localStorage.setItem(k,'unseen');const original=Storage.prototype.setItem;Object.defineProperty(window,'writes',{value:0,writable:true});Storage.prototype.getItem=function(name){if(name===k)throw Error('read blocked');return null};Storage.prototype.setItem=function(name,value){Reflect.set(window,'writes',Reflect.get(window,'writes')+1);original.call(this,name,value)}},key);await page.reload();await confirm(page);await expect(page.getByRole('status')).toContainText('in this tab only');await page.getByRole('button',{name:'Review sample reset'}).click();await page.getByRole('button',{name:'Confirm sample reset'}).click();expect(await page.evaluate(()=>Reflect.get(window,'writes'))).toBe(0)})
-test('unavailable writes retain memory history and explain refresh loss',async({page})=>{await page.addInitScript(()=>{Storage.prototype.setItem=()=>{throw Error('blocked')}});await page.reload();await confirm(page);await expect(page.getByText('Review 1 · Active consideration')).toBeVisible();await expect(page.getByRole('status')).toContainText('Refresh may lose work')})
-test('reset rejects readability changes before confirmation',async({page})=>{await page.addInitScript(k=>{const original=Storage.prototype.getItem;Object.defineProperty(window,'canRead',{value:false,writable:true});Storage.prototype.getItem=function(name){if(name===k&&!Reflect.get(window,'canRead'))throw Error('blocked');return original.call(this,name)}},key);await page.reload();await page.getByRole('button',{name:'Review sample reset'}).click();await page.evaluate(()=>Reflect.set(window,'canRead',true));await page.getByRole('button',{name:'Confirm sample reset'}).click();await expect(page.getByRole('status')).toContainText('changed during reset review')})
-test('schema corruption preserves unsupported snapshot references',async({page})=>{const s=record(fresh(),snapshot(fresh()));const invalid=JSON.parse(JSON.stringify(s));invalid.history[0].snapshot.evidence[0].id='REAL';const raw=JSON.stringify(invalid);await page.evaluate(([k,v])=>localStorage.setItem(k,v),[key,raw]);await page.reload();await expect(page.getByRole('status')).toContainText('could not be verified');expect(await page.evaluate(k=>localStorage.getItem(k),key)).toBe(raw)})
-test('scope revision after cancelling a preview records current conditions',async({page})=>{await preview(page);await page.getByRole('button',{name:'Cancel review'}).click();await page.getByLabel('Conditions before any commitment').fill('Revised discovery scope requires explicit product approval.');await preview(page);await expect(page.getByRole('dialog')).toContainText('Revised discovery scope');await page.getByRole('button',{name:'Confirm reviewed decision'}).click();const raw=JSON.parse((await page.evaluate(k=>localStorage.getItem(k),key))!);expect(raw.history[0].snapshot.draft.conditions).toBe('Revised discovery scope requires explicit product approval.')})
-test('modal traps Tab and reverse Tab and Escape restores focus',async({page})=>{await preview(page);const cancel=page.getByRole('button',{name:'Cancel review'});await expect(cancel).toBeFocused();await page.keyboard.press('Shift+Tab');await expect(page.getByRole('button',{name:'Confirm reviewed decision'})).toBeFocused();await page.keyboard.press('Tab');await expect(cancel).toBeFocused();await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).toHaveCount(0);await expect(page.getByRole('button',{name:'Preview conditional decision'})).toBeFocused()})
-test('keyboard nav reaches comparison and date fields have labels',async({page})=>{await page.getByRole('button',{name:'02 · Compare packages'}).focus();await page.keyboard.press('Enter');await expect(page.getByRole('heading',{name:'Choose a package of work'})).toBeVisible();await page.getByRole('button',{name:'03 · Decision record'}).focus();await page.keyboard.press('Enter');await page.getByLabel('Decision owner').focus();await page.keyboard.press('Tab');await expect(page.getByLabel('Next review date')).toBeFocused()})
-for(const width of [320,390,1280])test(`revealed form and modal fit width ${width}`,async({page})=>{await page.setViewportSize({width,height:633});await compare(page);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await decision(page);await page.getByLabel('Unresolved risks / decision rationale').scrollIntoViewIfNeeded();await expect(page.getByLabel('Unresolved risks / decision rationale')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await preview(page);await page.getByRole('button',{name:'Confirm reviewed decision'}).scrollIntoViewIfNeeded();await expect(page.getByRole('button',{name:'Confirm reviewed decision'})).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:`evidence/review-${width}.png`,fullPage:true})})
-test('review docs are bundled and route links resolve locally',async({page})=>{for(const file of ['Product_Brief','PRD','Sample_Contract','Case_Study','Decisions_and_Risks','Validation','Sample_Walkthrough']){const response=await page.request.get(`./docs/product/${file}.md`);expect(response.ok()).toBe(true);expect(await response.text()).toContain('#')}})
+import { test, expect, type Page } from "@playwright/test";
+import { fresh, snapshot, record } from "../src/domain";
+import { key } from "../src/storage";
+async function decision(page: Page) {
+  await page.getByRole("button", { name: "03 · Decision record" }).click();
+}
+async function preview(page: Page) {
+  await decision(page);
+  await page
+    .getByRole("button", { name: "Preview conditional decision" })
+    .click();
+}
+async function confirm(page: Page) {
+  await preview(page);
+  await page.getByRole("button", { name: "Confirm reviewed decision" }).click();
+}
+async function compare(page: Page) {
+  await page.getByRole("button", { name: "02 · Compare packages" }).click();
+}
+const faults: string[] = [];
+test.beforeEach(async ({ page }) => {
+  faults.length = 0;
+  page.on("pageerror", (e) => faults.push(e.message));
+  page.on("console", (m) => {
+    if (m.type() === "error") faults.push(m.text());
+  });
+  page.on("request", (r) => {
+    if (
+      !r.url().startsWith("http://127.0.0.1:4193/") &&
+      !r.url().startsWith("blob:")
+    )
+      faults.push(`external ${r.url()}`);
+  });
+  await page.goto("./");
+});
+test.afterEach(() => expect(faults).toEqual([]));
+test("account keeps obligations requests observations and assumptions distinct", async ({
+  page,
+}) => {
+  await expect(
+    page.getByText("Existing obligation", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Requested features", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("O1 · Observation")).toBeVisible();
+  await expect(page.getByText("A2 · Assumption")).toBeVisible();
+  await expect(
+    page.getByText("Renewal result: not observed", { exact: false }),
+  ).toBeVisible();
+});
+test("primary reviewed decision is conditional and survives compatible refresh", async ({
+  page,
+}) => {
+  await compare(page);
+  await expect(
+    page.getByText("Blocked: 6 days beyond package budget"),
+  ).toBeVisible();
+  await confirm(page);
+  await expect(page.getByText("Review 1 · Active consideration")).toBeVisible();
+  await page.reload();
+  await decision(page);
+  await expect(page.getByText("Review 1 · Active consideration")).toBeVisible();
+  await expect(page.getByRole("status")).toContainText(
+    "Edits stay in this tab",
+  );
+});
+test("cancel preview makes no saved change", async ({ page }) => {
+  await preview(page);
+  await page.getByRole("button", { name: "Cancel review" }).click();
+  expect(await page.evaluate((k) => localStorage.getItem(k), key)).toBeNull();
+  await expect(
+    page.getByText("No reviewed decision yet.", { exact: false }),
+  ).toBeVisible();
+});
+test("custom package is blocked and bridge recovers fit", async ({ page }) => {
+  await compare(page);
+  await page.getByRole("button", { name: "Consider custom dashboard" }).click();
+  await page.getByRole("button", { name: "Prepare conditional brief" }).click();
+  await expect(
+    page.getByRole("button", { name: "Preview conditional decision" }),
+  ).toBeDisabled();
+  await page
+    .getByRole("button", { name: "Change package or capacity" })
+    .click();
+  await page.getByRole("button", { name: "Consider bridge only" }).click();
+  await confirm(page);
+  await expect(page.getByText("Review 3 · Active consideration")).toBeVisible();
+});
+test("10-day scenario rejects shared and supports a 2-day bridge", async ({
+  page,
+}) => {
+  await compare(page);
+  await page.getByLabel("Available team days (invented)").selectOption("10");
+  await expect(
+    page.getByText("Blocked: 4 days beyond package budget"),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Consider bridge only" }).click();
+  await preview(page);
+  await expect(page.getByRole("dialog")).toContainText(
+    "2 of 4 package days; 2 days remain",
+  );
+});
+test("conditions and unknowns must be entered before review", async ({
+  page,
+}) => {
+  await decision(page);
+  await page.getByLabel("Conditions before any commitment").fill("");
+  await expect(
+    page.getByRole("button", { name: "Preview conditional decision" }),
+  ).toBeDisabled();
+  await page
+    .getByLabel("Conditions before any commitment")
+    .fill("Require owner approval before any promise.");
+  await page.getByLabel("Unresolved risks / decision rationale").fill("");
+  await expect(
+    page.getByRole("button", { name: "Preview conditional decision" }),
+  ).toBeDisabled();
+});
+test("reviewed snapshot remains exact when later package is revised", async ({
+  page,
+}) => {
+  await confirm(page);
+  await compare(page);
+  await page.getByRole("button", { name: "Consider bridge only" }).click();
+  await confirm(page);
+  const history = page.locator(".record-history");
+  await expect(
+    history.getByRole("heading", {
+      name: "Shared export + operating bridge",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    history.getByRole("heading", {
+      name: "Operating bridge only",
+      exact: true,
+    }),
+  ).toBeVisible();
+  const raw = await page.evaluate((k) => localStorage.getItem(k), key);
+  const s = JSON.parse(raw!);
+  expect(s.history[0].snapshot.option.id).toBe("shared");
+  expect(s.history[1].snapshot.option.id).toBe("bridge");
+});
+test("withdrawal requires review and cancellation preserves activity", async ({
+  page,
+}) => {
+  await confirm(page);
+  await page.getByRole("button", { name: "Review withdrawal" }).click();
+  await page.getByRole("button", { name: "Cancel review" }).click();
+  await expect(page.getByText("Review 1 · Active consideration")).toBeVisible();
+  await page.getByRole("button", { name: "Review withdrawal" }).click();
+  await page.getByRole("button", { name: "Confirm withdrawal" }).click();
+  await expect(page.getByText("Review 1 · Withdrawn")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Export reviewed brief" }),
+  ).toBeVisible();
+});
+test("restore an earlier scope to draft then review a new snapshot", async ({
+  page,
+}) => {
+  await confirm(page);
+  await page.getByRole("button", { name: "Review withdrawal" }).click();
+  await page.getByRole("button", { name: "Confirm withdrawal" }).click();
+  await page.getByRole("button", { name: "Revise from this record" }).click();
+  await preview(page);
+  await page.getByRole("button", { name: "Confirm reviewed decision" }).click();
+  await expect(page.getByText("Review 1 · Withdrawn")).toBeVisible();
+  await expect(page.getByText("Review 4 · Active consideration")).toBeVisible();
+});
+test("export is self-contained exact reviewed scope", async ({ page }) => {
+  await confirm(page);
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export reviewed brief" }).click();
+  const file = await download;
+  expect(file.suggestedFilename()).toBe("renewal-compass-review-1.json");
+  const path = await file.path();
+  const { readFile } = await import("node:fs/promises");
+  const content = JSON.parse(await readFile(path!, "utf8"));
+  expect(content.kind).toBe("conditional-review");
+  expect(content.scope).toContain("Reusable review export");
+  expect(content.evidence.map((e: { id: string }) => e.id)).toEqual([
+    "O1",
+    "O2",
+    "A1",
+  ]);
+  expect(content.exclusions).toContain("no delivery date");
+});
+test("invalid saved bytes preserved through cancellation and explicit reset", async ({
+  page,
+}) => {
+  await page.evaluate((k) => localStorage.setItem(k, "{broken"), key);
+  await page.reload();
+  await expect(page.getByRole("status")).toContainText("preserved");
+  await decision(page);
+  await expect(
+    page.getByRole("button", { name: "Preview conditional decision" }),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: "Review sample reset" }).click();
+  await page.getByRole("button", { name: "Cancel review" }).click();
+  expect(await page.evaluate((k) => localStorage.getItem(k), key)).toBe(
+    "{broken",
+  );
+  await page.getByRole("button", { name: "Review sample reset" }).click();
+  await page.getByRole("button", { name: "Confirm sample reset" }).click();
+  expect(
+    JSON.parse((await page.evaluate((k) => localStorage.getItem(k), key))!)
+      .history,
+  ).toEqual([]);
+});
+test("same-revision changed saved data invalidates decision confirmation", async ({
+  page,
+}) => {
+  const s = fresh();
+  await page.evaluate(
+    ([k, v]) => localStorage.setItem(k, v),
+    [key, JSON.stringify(s)],
+  );
+  await page.reload();
+  await preview(page);
+  await page.evaluate(
+    ([k, v]) => localStorage.setItem(k, v),
+    [
+      key,
+      JSON.stringify({ ...s, draft: { ...s.draft, owner: "Other owner" } }),
+    ],
+  );
+  await page.getByRole("button", { name: "Confirm reviewed decision" }).click();
+  await expect(page.getByRole("status")).toContainText("changed during review");
+  expect(
+    JSON.parse((await page.evaluate((k) => localStorage.getItem(k), key))!)
+      .draft.owner,
+  ).toBe("Other owner");
+  await page.getByRole("button", { name: "Reload saved sample" }).click();
+  await expect(page.getByLabel("Decision owner")).toHaveValue("Other owner");
+});
+test("changed raw bytes invalidate reviewed reset", async ({ page }) => {
+  await page.evaluate((k) => localStorage.setItem(k, "broken"), key);
+  await page.reload();
+  await page.getByRole("button", { name: "Review sample reset" }).click();
+  await page.evaluate((k) => localStorage.setItem(k, "new unseen bytes"), key);
+  await page.getByRole("button", { name: "Confirm sample reset" }).click();
+  await expect(page.getByRole("status")).toContainText(
+    "changed during reset review",
+  );
+  expect(await page.evaluate((k) => localStorage.getItem(k), key)).toBe(
+    "new unseen bytes",
+  );
+});
+test("blocked reads with working writes never overwrite unseen content", async ({
+  page,
+}) => {
+  await page.addInitScript((k) => {
+    localStorage.setItem(k, "unseen");
+    const original = Storage.prototype.setItem;
+    Object.defineProperty(window, "writes", { value: 0, writable: true });
+    Storage.prototype.getItem = function (name) {
+      if (name === k) throw Error("read blocked");
+      return null;
+    };
+    Storage.prototype.setItem = function (name, value) {
+      Reflect.set(window, "writes", Reflect.get(window, "writes") + 1);
+      original.call(this, name, value);
+    };
+  }, key);
+  await page.reload();
+  await confirm(page);
+  await expect(page.getByRole("status")).toContainText("in this tab only");
+  await page.getByRole("button", { name: "Review sample reset" }).click();
+  await page.getByRole("button", { name: "Confirm sample reset" }).click();
+  expect(await page.evaluate(() => Reflect.get(window, "writes"))).toBe(0);
+});
+test("unavailable writes retain memory history and explain refresh loss", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Storage.prototype.setItem = () => {
+      throw Error("blocked");
+    };
+  });
+  await page.reload();
+  await confirm(page);
+  await expect(page.getByText("Review 1 · Active consideration")).toBeVisible();
+  await expect(page.getByRole("status")).toContainText("Refresh may lose work");
+});
+test("reset rejects readability changes before confirmation", async ({
+  page,
+}) => {
+  await page.addInitScript((k) => {
+    const original = Storage.prototype.getItem;
+    Object.defineProperty(window, "canRead", { value: false, writable: true });
+    Storage.prototype.getItem = function (name) {
+      if (name === k && !Reflect.get(window, "canRead")) throw Error("blocked");
+      return original.call(this, name);
+    };
+  }, key);
+  await page.reload();
+  await page.getByRole("button", { name: "Review sample reset" }).click();
+  await page.evaluate(() => Reflect.set(window, "canRead", true));
+  await page.getByRole("button", { name: "Confirm sample reset" }).click();
+  await expect(page.getByRole("status")).toContainText(
+    "changed during reset review",
+  );
+});
+test("schema corruption preserves unsupported snapshot references", async ({
+  page,
+}) => {
+  const s = record(fresh(), snapshot(fresh()));
+  const invalid = JSON.parse(JSON.stringify(s));
+  invalid.history[0].snapshot.evidence[0].id = "REAL";
+  const raw = JSON.stringify(invalid);
+  await page.evaluate(([k, v]) => localStorage.setItem(k, v), [key, raw]);
+  await page.reload();
+  await expect(page.getByRole("status")).toContainText("could not be verified");
+  expect(await page.evaluate((k) => localStorage.getItem(k), key)).toBe(raw);
+});
+test("scope revision after cancelling a preview records current conditions", async ({
+  page,
+}) => {
+  await preview(page);
+  await page.getByRole("button", { name: "Cancel review" }).click();
+  await page
+    .getByLabel("Conditions before any commitment")
+    .fill("Revised discovery scope requires explicit product approval.");
+  await preview(page);
+  await expect(page.getByRole("dialog")).toContainText(
+    "Revised discovery scope",
+  );
+  await page.getByRole("button", { name: "Confirm reviewed decision" }).click();
+  const raw = JSON.parse(
+    (await page.evaluate((k) => localStorage.getItem(k), key))!,
+  );
+  expect(raw.history[0].snapshot.draft.conditions).toBe(
+    "Revised discovery scope requires explicit product approval.",
+  );
+});
+test("modal traps Tab and reverse Tab and Escape restores focus", async ({
+  page,
+}) => {
+  await preview(page);
+  const cancel = page.getByRole("button", { name: "Cancel review" });
+  await expect(cancel).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(
+    page.getByRole("button", { name: "Confirm reviewed decision" }),
+  ).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(cancel).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Preview conditional decision" }),
+  ).toBeFocused();
+});
+test("keyboard nav reaches comparison and date fields have labels", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "02 · Compare packages" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(
+    page.getByRole("heading", { name: "Choose a package of work" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "03 · Decision record" }).focus();
+  await page.keyboard.press("Enter");
+  await page.getByLabel("Decision owner").focus();
+  await page.keyboard.press("Tab");
+  await expect(page.getByLabel("Next review date")).toBeFocused();
+});
+for (const width of [320, 390, 1280])
+  test(`revealed form and modal fit width ${width}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 633 });
+    await compare(page);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await decision(page);
+    await page
+      .getByLabel("Unresolved risks / decision rationale")
+      .scrollIntoViewIfNeeded();
+    await expect(
+      page.getByLabel("Unresolved risks / decision rationale"),
+    ).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await preview(page);
+    await page
+      .getByRole("button", { name: "Confirm reviewed decision" })
+      .scrollIntoViewIfNeeded();
+    await expect(
+      page.getByRole("button", { name: "Confirm reviewed decision" }),
+    ).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      path: `evidence/review-${width}.png`,
+      fullPage: true,
+    });
+  });
+test("review docs are bundled and route links resolve locally", async ({
+  page,
+}) => {
+  for (const file of [
+    "Product_Brief",
+    "PRD",
+    "Sample_Contract",
+    "Case_Study",
+    "Decisions_and_Risks",
+    "Validation",
+    "Sample_Walkthrough",
+  ]) {
+    const response = await page.request.get(`./docs/product/${file}.md`);
+    expect(response.ok()).toBe(true);
+    expect(await response.text()).toContain("#");
+  }
+});
