@@ -421,3 +421,73 @@ test("review docs are bundled and route links resolve locally", async ({
     expect(await response.text()).toContain("#");
   }
 });
+test("late review warnings appear in draft preview and exact export", async ({
+  page,
+}) => {
+  await decision(page);
+  await page.getByLabel("Next review date").fill("");
+  await expect(page.locator("form")).toContainText(
+    "Review timing is unresolved",
+  );
+  await expect(
+    page.getByRole("button", { name: "Preview conditional decision" }),
+  ).toBeDisabled();
+  await page.getByLabel("Next review date").fill("2026-11-07");
+  await expect(page.locator("form")).toContainText(
+    "after the November 6 decision deadline",
+  );
+  await page.getByLabel("Next review date").fill("2026-12-01");
+  await expect(page.locator("form")).toContainText("no advance review window");
+  await preview(page);
+  await expect(page.getByRole("dialog")).toContainText(
+    "at or after the November 28 renewal review",
+  );
+  await page.getByRole("button", { name: "Confirm reviewed decision" }).click();
+  const raw = JSON.parse(
+    (await page.evaluate((k) => localStorage.getItem(k), key))!,
+  );
+  expect(raw.history[0].snapshot.schedule.classification).toBe(
+    "renewal-window-missed",
+  );
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export reviewed brief" }).click();
+  const file = await download;
+  const { readFile } = await import("node:fs/promises");
+  const data = JSON.parse(await readFile((await file.path())!, "utf8"));
+  expect(data.schedule.message).toContain("does not imply a timely decision");
+});
+test("history limit explains paused actions and deliberate recovery", async ({
+  page,
+}) => {
+  let s = fresh();
+  for (let i = 0; i < 98; i++) s = record(s, snapshot(s));
+  await page.evaluate(
+    ([k, v]) => localStorage.setItem(k, v),
+    [key, JSON.stringify(s)],
+  );
+  await page.reload();
+  await decision(page);
+  await expect(
+    page.getByText("98 of 98 history events used (reviews and withdrawals)."),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      "History limit reached. Recording and withdrawal are paused.",
+      { exact: false },
+    ),
+  ).toContainText("Export reviewed records");
+  await expect(
+    page.getByRole("button", { name: "Preview conditional decision" }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Review withdrawal" }).first(),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: "Review sample reset" }).click();
+  await page.getByRole("button", { name: "Confirm sample reset" }).click();
+  await expect(
+    page.getByText("0 of 98 history events used (reviews and withdrawals)."),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Preview conditional decision" }),
+  ).toBeEnabled();
+});

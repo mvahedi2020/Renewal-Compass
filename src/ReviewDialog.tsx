@@ -68,6 +68,8 @@ export default function ReviewDialog({
             <dd>{snapshot.draft.owner}</dd>
             <dt>Review date</dt>
             <dd>{snapshot.draft.reviewDate}</dd>
+            <dt>Timing implication</dt>
+            <dd>{snapshot.schedule.message}</dd>
             <dt>Scope</dt>
             <dd>{snapshot.scope}</dd>
             <dt>Conditions</dt>

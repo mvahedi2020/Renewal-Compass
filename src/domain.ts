@@ -73,6 +73,32 @@ export type Draft = {
   conditions: string;
   note: string;
 };
+export const historyLimit = 98;
+export function timing(d: Draft) {
+  if (errors(d).some((issue) => issue.startsWith("Choose a valid review date")))
+    return {
+      classification: "date-unresolved",
+      message:
+        "Review timing is unresolved. Choose a valid review date before recording.",
+    } as const;
+  if (d.reviewDate >= "2026-11-28")
+    return {
+      classification: "renewal-window-missed",
+      message:
+        "Timing warning: review is at or after the November 28 renewal review. There is no advance review window; this late scenario does not imply a timely decision or retained renewal.",
+    } as const;
+  if (d.reviewDate > "2026-11-06")
+    return {
+      classification: "decision-deadline-missed",
+      message:
+        "Timing warning: review is after the November 6 decision deadline. Re-plan the decision timing; this scenario does not imply a timely commitment.",
+    } as const;
+  return {
+    classification: "within-decision-window",
+    message:
+      "Review is within the November 6 decision window. Discovery and approval conditions remain unresolved.",
+  } as const;
+}
 export type Snapshot = {
   id: number;
   draft: Draft;
@@ -85,6 +111,7 @@ export type Snapshot = {
   scope: string;
   exclusions: string;
   unresolved: string;
+  schedule: ReturnType<typeof timing>;
   kind: "conditional-review";
 };
 export type Event =
@@ -167,6 +194,7 @@ export function snapshot(state: State): Snapshot {
       scope: option.scope,
       exclusions: option.excluded,
       unresolved: state.draft.note,
+      schedule: timing(state.draft),
       kind: "conditional-review",
     }),
   ) as Snapshot;
@@ -178,6 +206,10 @@ export function active(s: State, id: number) {
   );
 }
 export function record(s: State, reviewed: Snapshot): State {
+  if (s.history.length >= historyLimit)
+    throw Error(
+      "History limit reached. Export reviewed records, then review a sample reset to begin again.",
+    );
   if (JSON.stringify(snapshot(s)) !== JSON.stringify(reviewed))
     throw Error("The draft changed. Preview the current decision.");
   return {
@@ -187,6 +219,10 @@ export function record(s: State, reviewed: Snapshot): State {
   };
 }
 export function withdraw(s: State, id: number): State {
+  if (s.history.length >= historyLimit)
+    throw Error(
+      "History limit reached. Export reviewed records, then review a sample reset to begin again.",
+    );
   if (!active(s, id)) throw Error("This decision is no longer active.");
   return {
     ...s,
@@ -255,7 +291,7 @@ export function parse(raw: string): State | null {
       v.revision < 0 ||
       !draftValid(v.draft) ||
       !Array.isArray(v.history) ||
-      v.history.length > 100
+      v.history.length > historyLimit
     )
       return null;
     let lastId = 0;
@@ -277,6 +313,7 @@ export function parse(raw: string): State | null {
             "scope",
             "exclusions",
             "unresolved",
+            "schedule",
             "kind",
           ]) ||
           typeof snap.id !== "number" ||

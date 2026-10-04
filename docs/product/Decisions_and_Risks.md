@@ -12,4 +12,4 @@
 
 All records and capacity figures are invented. There is no real retained revenue, employer result, account endorsement, outreach, legal/compliance determination or personal commercial claim. The fixture is a transparent demonstration, not human research. Mo owns Product / Program Management direction; AI assists implementation and verification.
 
-The history is finite. Near its 100-event bound, the app requires an explicit reviewed reset to begin again; export valuable records first. Only schema 1 and account-1 fixture references are compatible. Unknown or tampered records remain preserved rather than being guessed into a new format.
+The history is finite. At its 98-event bound, the app requires an explicit reviewed reset to begin again; export valuable records first. Only schema 1 and account-1 fixture references are compatible. Unknown or tampered records remain preserved rather than being guessed into a new format.

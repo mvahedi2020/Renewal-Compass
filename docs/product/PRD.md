@@ -14,9 +14,9 @@ Mo owns Product / Program Management framing, prioritization and tradeoff direct
 | Trace evidence and unknowns | Four labelled observation/assumption records, renewal timing and open questions | A1/A2 remain unsupported; review contains exact evidence version |
 | Compare packages | Three work packages, capacity arithmetic, broader impact, exclusions and dependencies | Reviewer can independently compute baseline 8-day budget and custom deficit of 6 |
 | Bound the recommendation | Shared package labelled provisional; custom blocked at baseline | A feasible option is not an approved commitment |
-| Review conditions deliberately | Draft, preview, cancel, confirm; required owner, conditions, risk and date | Confirmation records a conditional review, never sends a message or promises delivery |
+| Review conditions deliberately | Draft, preview, cancel, confirm; required owner, conditions, risk and date | Confirmation records a conditional review, never sends a message or promises delivery; late-date warnings persist in exact snapshot/export |
 | Preserve decision provenance | Immutable detached package/evidence snapshots and ordered withdrawal events | Later drafts cannot change a prior reviewed scope |
-| Recover responsibly | Restore earlier scope to a new draft, reviewed withdrawal, raw-bound reset and reload | Cancellation changes no saved state; new review required for revised scope |
+| Recover responsibly | Restore earlier scope to a new draft, reviewed withdrawal, raw-bound reset and reload | Cancellation changes no saved state; new review required for revised scope; visible 98-event limit explains export/reset recovery |
 | Explain persistence limits | Invalid bytes preserved; unreadable/write failure mode retains memory work | No overwrite of unseen bytes, no stale same-revision save |
 | Share truthful evidence | Self-contained JSON download of an exact recorded snapshot | Export includes scope, evidence, conditions, exclusions and fictional non-promise label |
 | Usable interaction | Native modal focus, Escape cancellation, labelled controls, narrow layout and status announcements | Production browser journeys verify keyboard and 320/390/1280 widths |

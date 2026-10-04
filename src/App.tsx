@@ -3,6 +3,8 @@ import {
   options,
   observations,
   calculation,
+  timing,
+  historyLimit,
   errors,
   snapshot,
   record,
@@ -401,6 +403,17 @@ export default function App() {
                     onChange={(e) => edit("reviewDate", e.target.value)}
                   />
                 </label>
+                <p
+                  className={
+                    timing(state.draft).classification ===
+                    "within-decision-window"
+                      ? "muted"
+                      : "no-fit"
+                  }
+                  role="note"
+                >
+                  {timing(state.draft).message}
+                </p>
                 <label>
                   Conditions before any commitment
                   <textarea
@@ -445,7 +458,7 @@ export default function App() {
                     invalid ||
                     !calc.feasible ||
                     issues.length > 0 ||
-                    state.history.length >= 98
+                    state.history.length >= historyLimit
                   }
                 >
                   Preview conditional decision
@@ -458,6 +471,17 @@ export default function App() {
             </div>
             <aside className="record-history">
               <h2>Reviewed decision history</h2>
+              <p>
+                {state.history.length} of {historyLimit} history events used
+                (reviews and withdrawals).
+              </p>
+              {state.history.length >= historyLimit ? (
+                <p className="no-fit" role="note">
+                  History limit reached. Recording and withdrawal are paused.
+                  Export reviewed records, then review a sample reset to begin
+                  again. Reset clears local history.
+                </p>
+              ) : null}
               <p>
                 Snapshots preserve the exact scope, evidence and conditions
                 reviewed. Later drafts do not update old records.
@@ -481,6 +505,7 @@ export default function App() {
                       {e.snapshot.draft.owner} · Review{" "}
                       {e.snapshot.draft.reviewDate}
                     </p>
+                    <p>{e.snapshot.schedule.message}</p>
                     <p>{e.snapshot.draft.conditions}</p>
                     <details>
                       <summary>Exact reviewed scope and evidence</summary>
@@ -511,7 +536,9 @@ export default function App() {
                       </button>
                       {active(state, e.snapshot.id) ? (
                         <button
-                          disabled={invalid || state.history.length >= 98}
+                          disabled={
+                            invalid || state.history.length >= historyLimit
+                          }
                           onClick={() =>
                             setReview({ kind: "withdraw", id: e.snapshot.id })
                           }

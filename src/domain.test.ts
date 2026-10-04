@@ -195,3 +195,33 @@ describe("ordered history boundary", () => {
     expect(s.history).toHaveLength(3);
   });
 });
+describe("timing and finite history clarity", () => {
+  it("derives late-decision and missed-renewal timing into exact export", () => {
+    for (const [date, classification] of [
+      ["2026-11-06", "within-decision-window"],
+      ["2026-11-07", "decision-deadline-missed"],
+      ["2026-11-28", "renewal-window-missed"],
+      ["2026-12-01", "renewal-window-missed"],
+    ]) {
+      const s = fresh();
+      s.draft.reviewDate = date;
+      const p = snapshot(s);
+      expect(p.schedule.classification).toBe(classification);
+      expect(JSON.parse(exportBrief(p)).schedule).toEqual(p.schedule);
+      expect(parse(JSON.stringify(record(s, p)))).not.toBeNull();
+    }
+  });
+  it("rejects tampered timing implications in reviewed history", () => {
+    const s = record(fresh(), snapshot(fresh()));
+    const x = JSON.parse(JSON.stringify(s));
+    x.history[0].snapshot.schedule.message = "Timely guaranteed renewal";
+    expect(parse(JSON.stringify(x))).toBeNull();
+  });
+  it("enforces the 98-event limit for record and withdrawal", () => {
+    let s = fresh();
+    for (let i = 0; i < 98; i++) s = record(s, snapshot(s));
+    expect(parse(JSON.stringify(s))).not.toBeNull();
+    expect(() => record(s, snapshot(s))).toThrow("History limit reached");
+    expect(() => withdraw(s, 1)).toThrow("History limit reached");
+  });
+});
