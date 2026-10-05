@@ -6,6 +6,8 @@ An executive decision workspace for a fictional enterprise renewal: distinguish 
 
 **Product decision:** provisionally support a reusable review export plus an operating bridge, while preserving a shared accessibility milestone. Reject the custom dashboard at baseline because it exceeds available package capacity by six days. The bridge-only alternative offers a smaller recoverable scope.
 
+Product tradeoff: a reusable package protects the shared milestone but still consumes the full available eight days. The next investment depends on actual workflow overlap, operating burden and agreed commitment conditions. See the [case study](docs/product/Case_Study.md) for the proposed comparison and investment criteria.
+
 ## Reviewer route
 
 [Interactive demo](https://mvahedi2020.github.io/Renewal-Compass/) · [Case study](docs/product/Case_Study.md) · [Exact walkthrough](docs/product/Sample_Walkthrough.md)

@@ -20,10 +20,14 @@ Each saved record contains exact copies of the option and evidence version. Chan
 
 ## Meaningful failure and recovery
 
-Selecting the custom dashboard at baseline blocks decision recording. Choosing bridge-only restores feasibility without inventing new capacity. A separate state failure shows why review must bind the content being reviewed: if another tab changes saved bytes, even at the same revision number, confirmation rejects the stale action. Invalid saved content is preserved until reviewed reset. If reading saved content fails while writing would work, the app keeps decisions in memory and never overwrites unseen data.
+Selecting the custom dashboard at baseline blocks decision recording. Choosing bridge-only restores feasibility without inventing new capacity. A changed local record invalidates its earlier review, protecting the scope actually inspected. Invalid saved work is preserved until deliberate reset; unavailable saving is disclosed so an account lead cannot rely on an unsaved review after closing the browser.
 
 ## What the prototype demonstrates
 
 It demonstrates a product decision workflow, calculable opportunity costs and deliberate local review/recovery. Automated checks cover the fictional arithmetic, snapshot provenance, schema/history constraints and production browser journeys. They do not establish customer acceptance, commercial impact or user comprehension. The proposed evaluation asks account leads and product managers to distinguish need from request, explain the rejected option and identify what must be true before commitment.
 
 A real organization would need discovery, governance and explicit authority before making any commitment. Those dependencies remain visible in the prototype and are not represented as completed work.
+
+## Next investment decision
+
+Before favoring the shared export, test the assumed common review fields with account and product stakeholders. If that overlap fails, the invented 12-of-20 reach cannot support reuse, and the two-day bridge may be the better bounded discovery step. Compare operating burden and unresolved customer need, not only build days. A real commitment would need agreed account value and risk, delivery capacity, bridge ownership and evidence that the package addresses the underlying workflow. The local review supplies none of that commercial authority and cannot attribute a renewal to the proposed work.
