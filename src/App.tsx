@@ -578,8 +578,8 @@ export default function App() {
             Mo · Product / Program Management. AI assists implementation and
             verification.
           </span>
-          <a href="./docs/product/Case_Study.md">Product case study</a>
-          <a href="./docs/product/Sample_Walkthrough.md">
+          <a href="./docs/product/Case_Study.html">Product case study</a>
+          <a href="./docs/product/Sample_Walkthrough.html">
             Reviewer walkthrough
           </a>
           <span>No human research conducted.</span>

@@ -1,5 +1,7 @@
 # Renewal Compass
 
+[Read the formatted product documents](https://mvahedi2020.github.io/Renewal-Compass/docs/index.html).
+
 An executive decision workspace for a fictional enterprise renewal: distinguish the account need from requested features, compare capacity and broader-customer impact, then record a conditional review with explicit boundaries.
 
 **Product decision:** provisionally support a reusable review export plus an operating bridge, while preserving a shared accessibility milestone. Reject the custom dashboard at baseline because it exceeds available package capacity by six days. The bridge-only alternative offers a smaller recoverable scope.
