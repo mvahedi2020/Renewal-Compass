@@ -4,6 +4,12 @@ Compare a customer’s feature request with the team’s available time and the 
 
 **The product choice:** Address the customer’s underlying need without quietly displacing shared priorities. [Try the sample](https://mvahedi2020.github.io/Renewal-Compass/) · [Follow the walkthrough](Sample_Walkthrough.md).
 
+## Experience and decision
+
+My work at 5th Kind included product tradeoffs around enterprise renewal needs. This example focuses on meeting an account’s underlying need while protecting shared roadmap capacity. This is a separate fictional portfolio exercise; its records, rules and results do not reproduce an employer system.
+
+**Decision to challenge:** When is an account-specific request worth displacing shared work? The answer needs customer evidence, opportunity cost and agreed authority; a renewal deadline alone is not enough.
+
 An enterprise account request can look urgent and specific while the business need remains underspecified. This fictional prototype asks an account lead and product manager to choose what outcome to support without consuming the wider product roadmap or promising work whose conditions are unresolved.
 
 Mo owns Product / Program Management framing and tradeoff direction. AI assists implementation and verification. The project uses original fictional data, with no employer contract, customer name, contract value, renewal result or endorsement. No human research has been conducted.

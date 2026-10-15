@@ -6,6 +6,8 @@ Compare a customer’s feature request with the team’s available time and the 
 
 **Try it:** Compare the custom dashboard with the shared export and temporary workaround, then review the conditions of your choice. [Open the demo](https://mvahedi2020.github.io/Renewal-Compass/) · [Follow the walkthrough](docs/product/Sample_Walkthrough.md).
 
+**Experience connection:** My work at 5th Kind included product tradeoffs around enterprise renewal needs. This example focuses on meeting an account’s underlying need while protecting shared roadmap capacity. [Read the decision to challenge](docs/product/Case_Study.md#experience-and-decision).
+
 **Product decision:** provisionally support a reusable review export plus an operating bridge, while preserving a shared accessibility milestone. Reject the custom dashboard at baseline because it exceeds available package capacity by six days. The bridge-only alternative offers a smaller recoverable scope.
 
 Product tradeoff: a reusable package protects the shared milestone but still consumes the full available eight days. The next investment depends on actual workflow overlap, operating burden and agreed commitment conditions. See the [case study](docs/product/Case_Study.md) for the proposed comparison and investment criteria.
