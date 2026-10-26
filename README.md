@@ -42,3 +42,7 @@ npm run preview
 The preview is at `http://127.0.0.1:4193/Renewal-Compass/`. Port 4193 is fixed and strict. Production browser tests own and stop their preview server. Build includes all product documents. The GitHub workflow **Verify and publish demo** runs software gates and publishes the static build via Pages.
 
 The app has no server, login, telemetry, external integration, live AI or runtime configuration. CSP and referrer policy constrain the static experience. The runtime guard rejects non-Node-24 builds and custom VITE settings; the tracked-file guard rejects generated/runtime/environment files. Draft edits remain in memory until a reviewed decision is confirmed. Local schema/reference/history checks preserve invalid bytes and reject conflicting writes; unavailable persistence is explained. Export is self-contained reviewed JSON, not an import or agreement.
+
+## Typography
+
+The interface and product reading guide use Calibri for body text and Aptos Display for headings. Only Aptos, Aptos Display, SF Pro, SF Pro Rounded and Calibri are requested. Availability depends on the fonts installed on the viewing device; native Apple font aliases select SF Pro. No font files are bundled or downloaded.

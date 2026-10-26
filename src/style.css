@@ -1,11 +1,34 @@
 :root {
-  font-family: Arial, Helvetica, sans-serif;
+  --font-body:"Calibri", "Aptos", "SF Pro", -apple-system, BlinkMacSystemFont;
+  --font-heading:"Aptos Display", "Aptos", "Calibri", "SF Pro", -apple-system, BlinkMacSystemFont;
+  font-family: var(--font-body);
   color: #35243a;
   background: #f5f2e8;
   font-synthesis: none;
   font-size: 16px;
   line-height: 1.55;
 }
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--font-body);
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -98,7 +121,7 @@ main {
   color: #6b596d;
 }
 h1 {
-  font-family: Georgia, serif;
+  font-family: var(--font-heading);
   font-size: 48px;
   line-height: 1.1;
   font-weight: 400;
@@ -130,8 +153,7 @@ h1 span {
 .account strong {
   display: block;
   font:
-    40px Georgia,
-    serif;
+    40px var(--font-heading);
   line-height: 1.5;
 }
 .account hr {
@@ -186,7 +208,7 @@ nav button[aria-current]:after {
   font-weight: 700;
 }
 h2 {
-  font-family: Georgia, serif;
+  font-family: var(--font-heading);
   font-weight: 400;
   font-size: 28px;
   line-height: 1.25;
@@ -199,8 +221,7 @@ h3 {
 }
 .large {
   font:
-    26px/1.4 Georgia,
-    serif;
+    26px/1.4 var(--font-heading);
 }
 .brief-layout {
   display: grid;
@@ -275,8 +296,7 @@ h3 {
 .capacity-strip strong {
   display: block;
   font:
-    32px Georgia,
-    serif;
+    32px var(--font-heading);
 }
 .capacity-strip span {
   font-size: 12px;
@@ -314,8 +334,7 @@ h3 {
 }
 .options h3 {
   font:
-    23px/1.3 Georgia,
-    serif;
+    23px/1.3 var(--font-heading);
 }
 .options p,
 .options dl {
@@ -454,8 +473,7 @@ summary {
 }
 .recovery h2 {
   font:
-    18px Georgia,
-    serif;
+    18px var(--font-heading);
   margin: 0;
 }
 .recovery p {
